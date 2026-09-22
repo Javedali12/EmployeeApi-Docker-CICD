@@ -1,0 +1,30 @@
+﻿services:
+  api:
+    image: employee-api:1.3
+    ports:
+      - "8087:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=EmployeeDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost,1433 -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    ports:
+      - "11434:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: "Developer"
+    volumes:
+      - employee-compose-sql-data:/var/opt/mssql
+
+volumes:
+  employee-compose-sql-data:
