@@ -11,6 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build Docker image
-        run: docker build -t employee-api:ci .
+        run: docker build -t employee-api:${GITHUB_SHA::7} .
+        
       - name: Verify Docker image
-        run: docker images employee-api        
+        run: docker images employee-api      
