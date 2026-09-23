@@ -10,8 +10,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Build Docker image
-        run: docker build -t employee-api:${GITHUB_SHA::7} .
-        
-      - name: Verify Docker image
-        run: docker images employee-api      
+  env:
+    ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    ECR_REPOSITORY: employee-api
+    IMAGE_TAG: ${{ github.sha }}
+  run: docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG::7} .
+      - name: Push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: employee-api
+          IMAGE_TAG: ${{ github.sha }}
+        run: docker push $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG::7}  
